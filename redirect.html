@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirect Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .error {
+            color: #d9534f;
+            font-weight: bold;
+        }
+        .redirecting {
+            color: #5cb85c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="message-container">
+        <h1>Redirect Service</h1>
+        <p id="status-message">Checking redirect parameters...</p>
+    </div>
+
+    <script>
+        // Configuration object for redirect mappings
+        const redirectConfig = {
+            // Format: 'from-param-value': { versions: { '1': 'url1', '2': 'url2' }, default: 'default-url' }
+            'vcard': {
+                versions: {
+                    '1': 'https://forms.office.com/r/4GTAnvRUGP',
+                },
+                default: 'https://forms.office.com/r/4GTAnvRUGP'
+            },
+            // Add more redirect mappings as needed
+        };
+
+        // Default homepage to redirect to if no valid parameters are provided
+        const homepageUrl = '/';
+        
+        // Function to get URL parameters
+        function getUrlParams() {
+            const params = {};
+            const queryString = window.location.search.substring(1);
+            const paramPairs = queryString.split('&');
+            
+            for (const pair of paramPairs) {
+                const [key, value] = pair.split('=');
+                if (key) params[key] = value || '';
+            }
+            
+            return params;
+        }
+        
+        // Function to handle redirection
+        function handleRedirect() {
+            const params = getUrlParams();
+            const fromParam = params.from;
+            const versionParam = params.v;
+            const statusElement = document.getElementById('status-message');
+            
+            // Check if 'from' parameter exists and is in our config
+            if (fromParam && redirectConfig[fromParam]) {
+                const redirectInfo = redirectConfig[fromParam];
+                let targetUrl;
+                
+                // Check if version exists and is in our config
+                if (versionParam && redirectInfo.versions && redirectInfo.versions[versionParam]) {
+                    targetUrl = redirectInfo.versions[versionParam];
+                    statusElement.className = 'redirecting';
+                    statusElement.innerText = `Redirecting to ${fromParam} (version ${versionParam})...`;
+                } else if (redirectInfo.default) {
+                    // Use default URL for this 'from' parameter
+                    targetUrl = redirectInfo.default;
+                    statusElement.className = 'redirecting';
+                    statusElement.innerText = `Redirecting to ${fromParam} (default version)...`;
+                } else {
+                    // Error - 'from' exists but no matching version or default
+                    statusElement.className = 'error';
+                    statusElement.innerText = `Error: Version '${versionParam}' not found for '${fromParam}'`;
+                    return;
+                }
+                
+                // Perform the redirect after a short delay (to show the message)
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 500);
+                
+            } else {
+                // No valid 'from' parameter - redirect to homepage
+                statusElement.className = 'error';
+                statusElement.innerText = `Error: Invalid redirect parameters. Redirecting to homepage...`;
+                
+                // Redirect to homepage after a short delay
+                setTimeout(() => {
+                    window.location.href = homepageUrl;
+                }, 800);
+            }
+        }
+        
+        // Execute when the page loads
+        window.onload = handleRedirect;
+    </script>
+</body>
+</html>
